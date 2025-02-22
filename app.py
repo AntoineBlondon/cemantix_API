@@ -1,11 +1,12 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import time
 from gensim.models import KeyedVectors
 import random
 import datetime
 
 app = Flask(__name__)
-
+CORS(app)
 # Load the model
 print("Loading model...")
 start = time.time()
@@ -51,7 +52,7 @@ def get_most_frequent_variant(word, word_vectors):
 ########### Flask API Endpoints ###############
 ###############################################
 
-@app.route("/daily-random-word", methods=["GET"])
+@app.route("/daily-random-word", methods=["GET", "POST"])
 def daily_random_word():
     word = get_daily_random_word(model)
     return jsonify({"daily_random_word": word})
@@ -60,12 +61,13 @@ def daily_random_word():
 def compare_words():
     data = request.json
     guess = data.get("guess")
+    OG_guess = guess
     
     if not guess:
         return jsonify({"error": "Missing guess"}), 400
     
-    target = get_daily_random_word(model)
-    guess = get_most_frequent_variant(guess, model)
+    target = get_most_frequent_variant(get_daily_random_word(model), model)
+    guess = get_most_frequent_variant(guess, model) 
     
     if target not in model or guess not in model:
         return jsonify({"error": "One or both words are not in the model's vocabulary"}), 400
@@ -76,11 +78,10 @@ def compare_words():
     percentage = nb_words_closer / nb_words_total * 100
     
     return jsonify({
-        "target": target,
-        "guess": guess,
+        "guess": OG_guess,
         "distance": distance,
         "words_closer_count": nb_words_closer,
-        "percentage_closer": f"{percentage:.2f}%"
+        "percentage_closer": f"{percentage:.2f}"
     })
 
 if __name__ == "__main__":
