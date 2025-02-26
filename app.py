@@ -7,33 +7,16 @@ import datetime
 import requests
 import tempfile
 import os
-from huggingface_hub import hf_hub_download
 
 app = Flask(__name__)
 CORS(app)
 
-
-# Hugging Face model repository details
-REPO_ID = "AzureBlondon/cemantix-model"
-FILENAME = "model.bin"
-
-def download_model():
-    """Downloads the model from Hugging Face Hub using `huggingface_hub`."""
-    print(f"Downloading {FILENAME} from Hugging Face Hub...")
-
-    # Download the model (this automatically handles authentication if needed)
-    model_path = hf_hub_download(repo_id=REPO_ID, filename=FILENAME)
-
-    print(f"Model downloaded to: {model_path}. Loading model...")
-
-    # Load the model from the downloaded file
-    model = KeyedVectors.load_word2vec_format(model_path, binary=True, unicode_errors="ignore")
-    
-    print("Model successfully loaded!")
-    return model
-
 # Load the model
-model = download_model()
+print("Loading small model...")
+start = time.time()
+model = KeyedVectors.load_word2vec_format("small_model.bin", binary=True)
+end = time.time()
+print(f"✅ Loaded small model in {end - start:.2f} seconds")
 
 
 @app.after_request
