@@ -9,23 +9,30 @@ import tempfile
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": ["http://localhost:8000", "http://kggmantix.pythonanywhere.com"]}})
 
+@app.after_request
+def add_cors_headers(response):
+    """Ensures that all responses contain the correct CORS headers."""
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:8000"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
+@app.route("/guess", methods=["OPTIONS"])
+def handle_options():
+    """Handles preflight OPTIONS requests explicitly."""
+    response = jsonify({"message": "CORS preflight successful."})
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:8000"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
 # Load the model
 print("Loading small model...")
 start = time.time()
 model = KeyedVectors.load_word2vec_format("small_model.bin", binary=True)
 end = time.time()
 print(f"✅ Loaded small model in {end - start:.2f} seconds")
-
-
-@app.after_request
-def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    return response
-
 
 # Helper functions
 def get_random_frequent_word(word_vectors, top_n=3000):
