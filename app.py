@@ -4,18 +4,53 @@ import time
 from gensim.models import KeyedVectors
 import random
 import datetime
+import requests
+import tempfile
+import os
 
 app = Flask(__name__)
 CORS(app)
-# Load the model
-print("Loading model...")
-start = time.time()
 
-# frWac_postag_no_phrase_1000_skip_cut100
 
-model = KeyedVectors.load_word2vec_format("model.bin", binary=True, unicode_errors="ignore")
-end = time.time()
-print("Model loaded in", end - start, "seconds")
+# Hugging Face model link
+MODEL_URL = "https://huggingface.co/AzureBlondon/cemantix-model/resolve/main/model.bin"
+
+def download_model():
+    """Downloads the model from Hugging Face and loads it from a temporary file."""
+    print(f"Downloading model from {MODEL_URL}...")
+
+    response = requests.get(MODEL_URL, stream=True)
+    total_size = int(response.headers.get("content-length", 0))
+    block_size = 8192  # 8 KB
+    downloaded_size = 0
+
+    # Create a temporary file for the model
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as temp_file:
+        temp_path = temp_file.name  # Save path to load later
+        
+        start = time.time()
+        for chunk in response.iter_content(block_size):
+            if chunk:
+                temp_file.write(chunk)
+                downloaded_size += len(chunk)
+                percent_complete = (downloaded_size / total_size) * 100 if total_size else 0
+                print(f"\rDownloading: {percent_complete:.2f}% [{downloaded_size / (1024 * 1024):.2f}MB]", end="")
+
+        print("\nDownload complete. Loading model from file...")
+
+    # Load the model from the saved file
+    model = KeyedVectors.load_word2vec_format(temp_path, binary=True, unicode_errors="ignore")
+
+    # Remove the temporary file to free up space
+    os.remove(temp_path)
+
+    end = time.time()
+    print(f"Model loaded in {end - start:.2f} seconds")
+    return model
+
+# Load the model on startup
+model = download_model()
+
 
 # Helper functions
 def get_random_frequent_word(word_vectors, top_n=3000):
