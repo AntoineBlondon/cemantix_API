@@ -59,7 +59,7 @@ def daily_random_word():
 @app.route("/guess", methods=["POST"])
 def compare_words():
     data = request.json
-    guess = data.get("guess")
+    guess = data.get("guess").lower()
     OG_guess = guess
     
     if not guess:
