@@ -52,6 +52,14 @@ def download_model():
 model = download_model()
 
 
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
+
 # Helper functions
 def get_random_frequent_word(word_vectors, top_n=3000):
     """Return a random word from the top N most frequent words in the model."""
