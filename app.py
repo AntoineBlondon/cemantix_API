@@ -7,48 +7,32 @@ import datetime
 import requests
 import tempfile
 import os
+from huggingface_hub import hf_hub_download
 
 app = Flask(__name__)
 CORS(app)
 
 
-# Hugging Face model link
-MODEL_URL = "https://huggingface.co/AzureBlondon/cemantix-model/resolve/main/model.bin"
+# Hugging Face model repository details
+REPO_ID = "AzureBlondon/cemantix-model"
+FILENAME = "model.bin"
 
 def download_model():
-    """Downloads the model from Hugging Face and loads it from a temporary file."""
-    print(f"Downloading model from {MODEL_URL}...")
+    """Downloads the model from Hugging Face Hub using `huggingface_hub`."""
+    print(f"Downloading {FILENAME} from Hugging Face Hub...")
 
-    response = requests.get(MODEL_URL, stream=True)
-    total_size = int(response.headers.get("content-length", 0))
-    block_size = 8192  # 8 KB
-    downloaded_size = 0
+    # Download the model (this automatically handles authentication if needed)
+    model_path = hf_hub_download(repo_id=REPO_ID, filename=FILENAME)
 
-    # Create a temporary file for the model
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as temp_file:
-        temp_path = temp_file.name  # Save path to load later
-        
-        start = time.time()
-        for chunk in response.iter_content(block_size):
-            if chunk:
-                temp_file.write(chunk)
-                downloaded_size += len(chunk)
-                percent_complete = (downloaded_size / total_size) * 100 if total_size else 0
-                print(f"\rDownloading: {percent_complete:.2f}% [{downloaded_size / (1024 * 1024):.2f}MB]", end="")
+    print(f"Model downloaded to: {model_path}. Loading model...")
 
-        print("\nDownload complete. Loading model from file...")
-
-    # Load the model from the saved file
-    model = KeyedVectors.load_word2vec_format(temp_path, binary=True, unicode_errors="ignore")
-
-    # Remove the temporary file to free up space
-    os.remove(temp_path)
-
-    end = time.time()
-    print(f"Model loaded in {end - start:.2f} seconds")
+    # Load the model from the downloaded file
+    model = KeyedVectors.load_word2vec_format(model_path, binary=True, unicode_errors="ignore")
+    
+    print("Model successfully loaded!")
     return model
 
-# Load the model on startup
+# Load the model
 model = download_model()
 
 
