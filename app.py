@@ -35,7 +35,7 @@ def count_words_closer(target, guess, word_vectors):
     
     guess_distance = word_vectors.distance(target, guess)
     closer_count = sum(1 for word in word_vectors.index_to_key 
-                       if word != target and word_vectors.distance(target, word) < guess_distance)
+                       if word_vectors.distance(target, word) < guess_distance)
     return closer_count
 
 def get_most_frequent_variant(word, word_vectors):
