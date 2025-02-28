@@ -63,7 +63,13 @@ def count_words_closer(target, guess, word_vectors):
 def get_most_frequent_variant(word, word_vectors):
     """Return the most frequent variant of a word (first match found in model's vocabulary)."""
     variants = [w for w in word_vectors.index_to_key if w.startswith(word + "_")]
-    return variants[0] if variants else word
+    return treat_word(variants[0] if variants else word)
+
+
+def treat_word(word):
+    word = word.lower()
+    word = word.trim()
+    return word
 
 
 
@@ -81,7 +87,7 @@ def daily_random_word():
 @app.route("/guess", methods=["POST"])
 def compare_words():
     data = request.json
-    guess = data.get("guess")
+    guess = treat_word(data.get("guess"))
     OG_guess = guess
     
     if not guess:
@@ -90,8 +96,8 @@ def compare_words():
     target = get_most_frequent_variant(get_daily_random_word(model), model)
     guess = get_most_frequent_variant(guess, model) 
     
-    if target not in model or guess not in model:
-        return jsonify({"error": "One or both words are not in the model's vocabulary"}), 400
+    if guess not in model:
+        return jsonify({"error": f"Guess is not in the model's vocabulary: {guess}"}), 400
     
     distance = model.distance(target, guess)
     nb_words_closer = count_words_closer(target, guess, model)
