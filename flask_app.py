@@ -66,9 +66,9 @@ def get_most_frequent_variant(word, word_vectors):
     return treat_word(variants[0] if variants else word)
 
 
-def treat_word(word):
+def treat_word(word: str) -> str:
     word = word.lower()
-    word = word.trim()
+    word = word.strip()
     return word
 
 
