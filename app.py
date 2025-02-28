@@ -41,8 +41,15 @@ def count_words_closer(target, guess, word_vectors):
 def get_most_frequent_variant(word, word_vectors):
     """Return the most frequent variant of a word (first match found in model's vocabulary)."""
     variants = [w for w in word_vectors.index_to_key if w.startswith(word + "_")]
-    return variants[0] if variants else word
+    return treat_word(variants[0] if variants else word)
 
+
+
+
+def treat_word(word):
+    word = word.lower()
+    word = word.trim()
+    return word
 
 
 
@@ -59,7 +66,7 @@ def daily_random_word():
 @app.route("/guess", methods=["POST"])
 def compare_words():
     data = request.json
-    guess = data.get("guess").lower()
+    guess = treat_word(data.get("guess"))
     OG_guess = guess
     
     if not guess:
